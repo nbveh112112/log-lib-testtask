@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "logger.h"
+#include "worker.h"
 
 std::ostream& operator<<(std::ostream& os, const LogLevel& level) {
     switch (level) {
@@ -26,9 +27,19 @@ std::ostream& operator<<(std::ostream& os, const LogLevel& level) {
     return os;
 }
 
+struct LogRequest {
+    std::string message;
+    LogLevel level;
+};
+
 class ConsoleApp {
 public:
-    ConsoleApp(const std::string& logFile, LogLevel defaultLevel) : logger_(logFile, defaultLevel), logFileName_(logFile) {}
+    ConsoleApp(const std::string& logFile, LogLevel defaultLevel)
+            : logger_(logFile, defaultLevel), logFileName_(logFile), worker_(logger_) {}
+
+    ~ConsoleApp(){
+
+    }
 
     bool isLogFileValid() {
         std::ofstream testFile(logFileName_, std::ios::app);
@@ -40,9 +51,8 @@ public:
         return true;
     }
 
-
     void run() {
-        if(!isLogFileValid())
+        if (!isLogFileValid())
             return;
 
         printHelp();
@@ -93,16 +103,17 @@ private:
     }
 
     void logMessage(const std::string& message) {
-        std::thread logThread([&, message] { logger_.log(message); });
-        logThread.detach();
+        LogRequest request = {message, logger_.getDefaultLevel()};
+        worker_.addRequest(request);
     }
 
     void logMessage(std::istringstream& iss, LogLevel level) {
         std::string message;
-        std::getline(iss >> std::ws, message); // Read the rest of the line as the message
-        std::thread logThread([&, message, level] { logger_.log(message, level); });
-        logThread.detach();
+        std::getline(iss >> std::ws, message);
+        LogRequest request = {message, level};
+        worker_.addRequest(request);
     }
+
 
     void setLevel(const std::string& levelStr) {
         LogLevel level;
@@ -119,10 +130,10 @@ private:
         logger_.setLevel(level);
         std::cout << "Default log level set to: " << level << std::endl;
     }
-
 private:
     Logger logger_;
     std::string logFileName_;
+    Worker worker_;
 };
 
 LogLevel parseLogLevel(const std::string& levelString) {

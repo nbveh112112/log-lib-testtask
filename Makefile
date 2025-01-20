@@ -17,8 +17,8 @@ $(BUILD_DIR)/$(LIB_NAME): $(LIB_DIR)/logger.h $(LIB_DIR)/logger.cpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -shared -o $(BUILD_DIR)/$(LIB_NAME) $(LIB_DIR)/logger.cpp
 
-$(BUILD_DIR)/$(APP_NAME): $(APP_DIR)/main.cpp $(BUILD_DIR)/$(LIB_NAME)
-	$(CXX) $(CXXFLAGS) -I$(LIB_DIR) -o $(BUILD_DIR)/$(APP_NAME) $(APP_DIR)/main.cpp -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR) -llogger -lpthread
+$(BUILD_DIR)/$(APP_NAME): $(APP_DIR)/main.cpp $(BUILD_DIR)/$(LIB_NAME) $(APP_DIR)/worker.h $(APP_DIR)/worker.cpp
+	$(CXX) $(CXXFLAGS) -I$(LIB_DIR) -o $(BUILD_DIR)/$(APP_NAME) $(APP_DIR)/main.cpp $(APP_DIR)/worker.cpp -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR) -llogger -lpthread
 
 clean:
 	rm -rf $(BUILD_DIR)
